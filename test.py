@@ -1,41 +1,19 @@
-import RPi.GPIO as gpio
 import time
+import picamera
 
-import engines
-import threading
+# sensor modes
+#	Resolution	Aspect Ratio	Framerates	Video	Image	FoV	Binning
+# 1	1920x1080	16:9	1-30fps	    x	 	        Partial	None
+# 2	2592x1944	4:3	    1-15fps	    x	    x	    Full	None
+# 3	2592x1944	4:3	    0.1666-1fps	x	    x	    Full	None
+# 4	1296x972	4:3	    1-42fps	    x	 	        Full	2x2
+# 5	1296x730	16:9	1-49fps	    x	 	        Full	2x2
+# 6	640x480	    4:3	    42.1-60fps	x	 	        Full	4x4
+# 7	640x480	    4:3	    60.1-90fps	x	 	        Full	4x4
 
-
-gpio.setmode(gpio.BCM)
-#gpio.setmode(gpio.BOARD)
-
-
-# set the pin direction
-gpio.setup ( 23, gpio.OUT)
-gpio.setup ( 18, gpio.OUT)
-
-
-
-gpio.output ( 18, True)
-gpio.output ( 23, True)
-
-time.sleep(1)
-gpio.output ( 18, False)
-gpio.output ( 23, False)
-
-
-
-engine = engines.engine()
-t_engine = threading.Thread(target=engine.start_engine )
-t_engine.start()
-
-engine.desired_direction = "backward"
-engine.desired_speed = 70
-engine.acceleration = 3
-time.sleep(0.2)
-engine.desired_direction = "stay"
-
-
-gpio.cleanup()
-
-
-
+with picamera.PiCamera(camera_num=0,sensor_mode=1) as camera:
+    camera.resolution = (1024, 768)
+    # camera.start_preview()
+    # Camera warm-up time
+    time.sleep(2)
+    camera.capture('foo.jpg')

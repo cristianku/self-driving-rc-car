@@ -6,8 +6,6 @@
 
 import smbus
 import time
-#import scipy
-
 
 
 def read_acc():
@@ -33,18 +31,16 @@ def read_acc():
 
 	# Convert the data
 	xAccl = data1 * 256 + data0
-	#
-	if xAccl > 32767:
+	if xAccl > 32767 :
 		xAccl -= 65536
 
-    curr_time = time.time()
 	# LSM303DLHC Accl address, 0x19(25)
 	# Read data back from 0x2A(42), 2 bytes
 	# Y-Axis Accl LSB, Y-Axis Accl MSB
 	data0 = bus.read_byte_data(0x19, 0x2A)
 	data1 = bus.read_byte_data(0x19, 0x2B)
-    after_time = time.time()
-    # Convert the data
+
+	# Convert the data
 	yAccl = data1 * 256 + data0
 	if yAccl > 32767 :
 		yAccl -= 65536
@@ -109,9 +105,7 @@ def read_acc():
 		zMag -= 65536
 
 	# Output data to screen
-	print "Acceleration in X-Axis : %d" % xAccl, "data0=", data0, "data1=", data1
-	velocity = scipy.integrate.simps(xAccl, dx=0.001)
-
+	print "Acceleration in X-Axis : %d" % xAccl
 	# print "Acceleration in Y-Axis : %d" % yAccl
 	# print "Acceleration in Z-Axis : %d" % zAccl
 	# print "Magnetic field in X-Axis : %d" %xMag

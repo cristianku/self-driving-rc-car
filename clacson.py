@@ -1,19 +1,37 @@
+import pygame
 import time
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(12, GPIO.OUT)
 
-p = GPIO.PWM(12, 50)  # channel=12 frequency=50Hz
-p.start(0)
-try:
-    while 1:
-        for dc in range(0, 101, 5):
-            p.ChangeDutyCycle(dc)
-            time.sleep(0.1)
-        for dc in range(100, -1, -5):
-            p.ChangeDutyCycle(dc)
-            time.sleep(0.1)
-except KeyboardInterrupt:
-    pass
-p.stop()
-GPIO.cleanup()
+
+class clacson():
+
+    def __init__(self):
+        pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=4096)
+        # pygame.mixer.music.load("clacson.wav")
+        pygame.mixer.music.load("clacson_short.wav")
+        pygame.mixer.music.set_volume(1)
+        self.clacson_on = True
+        self.play_short = False
+
+    def main(self):
+
+        while self.clacson_on == True:
+            if self.play_short == True:
+                self.play_short_fun()
+                self.play_short = False
+        print " exiting clacson"
+        pygame.mixer.stop()
+        pygame.mixer.fadeout(1)
+        pygame.mixer.quit()
+
+
+    def play_short_fun(self):
+        print " playing short "
+        for i in range(1,3):
+            print " beep  " , i
+
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy() == True:
+                 continue
+        print " here "
+
+            #time.sleep ( 0.1)
