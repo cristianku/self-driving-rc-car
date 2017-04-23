@@ -1,7 +1,7 @@
 import smbus
 import time
 
-import scipy.integrate as integrate
+# import scipy.integrate as integrate
 
 class accelerometr():
 
@@ -88,8 +88,8 @@ class accelerometr():
             # print " integrating  self.xAccl_array ", self.xAccl_array, "self.dt  ", self.dt
             # print "              self.yAccl_array ", self.yAccl_array, "self.dt  ", self.dt
 
-            self.velocity_ms = integrate.simps(Accl_array , dx=self.dt)
-            self.velocity = self.velocity_ms * 18 / 360
+            # self.velocity_ms = integrate.simps(Accl_array , dx=self.dt)
+            # self.velocity = self.velocity_ms * 18 / 360
             # Output data to screen
             if time.time() - self.lastdisplay > 1:
                 self.lastdisplay = time.time()

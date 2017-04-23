@@ -1,16 +1,17 @@
-import leds
-import ultrasonic_sensors
-import system_info
-import engines
-import servo
-import clacson
-import accelerometr
-import smbus
-
+# import leds
+# import ultrasonic_sensors
+# import system_info
+# import engines
+# import servo
+# import clacson
+# import accelerometr
+# import smbus
+#
 import time
-import threading
-import speaking_car
-import pygame
+# import threading
+# import speaking_car
+# import pygame
+import camera
 
 import RPi.GPIO as GPIO
 
@@ -82,35 +83,36 @@ last_turn_to_left = 0
 obstacle_avoided = False
 
 
-acc = accelerometr.accelerometr()
-acc_thread = threading.Thread(target=acc.main )
-acc_thread.start()
+# acc = accelerometr.accelerometr()
+# acc_thread = threading.Thread(target=acc.main )
+# acc_thread.start()
+
 #
 # clacson = clacson.clacson()
 # t_clacson = threading.Thread(target=clacson.main )
 # t_clacson.start()
 
-
-speaking_car = speaking_car.speaking_car()
-
-
-while True:
-     time.sleep (.5)
-     if acc.velocity > 48 and acc.velocity < 52:
-         speaking_car.play_cinquanta()
-         time.sleep(0.5)
-
-     if acc.velocity > 38 and acc.velocity < 42:
-         speaking_car.play_quaranta()
-         time.sleep(0.5)
-
-     if acc.velocity > 58 and acc.velocity < 62:
-         speaking_car.play_sessanta()
-         time.sleep(0.5)
-
-     if acc.velocity > 68 and acc.velocity < 72:
-             speaking_car.play_settanta()
-             time.sleep(0.5)
+#
+# speaking_car = speaking_car.speaking_car()
+#
+#
+# while True:
+#      time.sleep (.5)
+#      if acc.velocity > 48 and acc.velocity < 52:
+#          speaking_car.play_cinquanta()
+#          time.sleep(0.5)
+#
+#      if acc.velocity > 38 and acc.velocity < 42:
+#          speaking_car.play_quaranta()
+#          time.sleep(0.5)
+#
+#      if acc.velocity > 58 and acc.velocity < 62:
+#          speaking_car.play_sessanta()
+#          time.sleep(0.5)
+#
+#      if acc.velocity > 68 and acc.velocity < 72:
+#              speaking_car.play_settanta()
+#              time.sleep(0.5)
 
 
              #     # clacson = clacson.clacson()
@@ -217,3 +219,97 @@ while True:
 
 # time.sleep(1)
     #stop_everything()
+
+camera = camera.camera()
+
+camera.take_picture()
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+import cv2
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import numpy as np
+
+
+image = mpimg.imread('photo.jpg')
+print('This image is: ',type(image),
+         'with dimensions:', image.shape)
+
+# Grab the x and y size and make a copy of the image
+ysize = image.shape[0]
+#xsize = image.shape[1]
+# Note: always make a copy rather than simply using "="
+color_select = np.copy(image)
+
+# Define our color selection criteria
+# Note: if you run this code, you'll find these are not sensible values!!
+# But you'll get a chance to play with them soon in a quiz
+red_threshold = 180
+green_threshold = 180
+blue_threshold = 180
+rgb_threshold = [red_threshold, green_threshold, blue_threshold]
+
+
+# Identify pixels below the threshold
+thresholds = (image[:,:,0] < rgb_threshold[0]) \
+            | (image[:,:,1] < rgb_threshold[1]) \
+            | (image[:,:,2] < rgb_threshold[2])
+color_select[thresholds] = [0,0,0]
+
+
+mpimg.imsave('photo2.jpg',color_select)
+
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+image = mpimg.imread('photo.jpg')
+
+
+import cv2  #bringing in OpenCV libraries
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) #grayscale conversion
+
+cv2.imwrite('photo_gray_image.png',gray)
+
+
+# Define a kernel size and apply Gaussian smoothing
+kernel_size = 5
+blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
+
+# Define our parameters for Canny and apply
+low_threshold = 50
+high_threshold = 150
+edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
+cv2.imwrite('photo_edges.png',edges)
+
+# Next we'll create a masked edges image using cv2.fillPoly()
+mask = np.zeros_like(edges)
+ignore_mask_color = 255
+
+# This time we are defining a four sided polygon to mask
+imshape = image.shape
+vertices = np.array([[(0,imshape[0]),(200, 230), (500, 230), (imshape[1],imshape[0])]], dtype=np.int32)
+cv2.fillPoly(mask, vertices, ignore_mask_color)
+masked_edges = cv2.bitwise_and(edges, mask)
+cv2.imwrite('photo_masked_edges.png',masked_edges)
+
+# Define the Hough transform parameters
+# Make a blank the same size as our image to draw on
+rho = 2 # distance resolution in pixels of the Hough grid
+theta = 1 #np.pi/180 # angular resolution in radians of the Hough grid
+threshold = 15     # minimum number of votes (intersections in Hough grid cell)
+min_line_length = 40 #minimum number of pixels making up a line
+max_line_gap = 20    # maximum gap in pixels between connectable line segments
+line_image = np.copy(image)*0 # creating a blank to draw lines on
+
+# Run Hough on edge detected image
+# Output "lines" is an array containing endpoints of detected line segments
+lines = cv2.HoughLinesP(masked_edges, rho, theta, threshold, np.array([]),
+                            min_line_length, max_line_gap)
+
+# Iterate over the output "lines" and draw lines on a blank image
+for line in lines:
+    for x1,y1,x2,y2 in line:
+        cv2.line(line_image,(x1,y1),(x2,y2),(255,0,0),10)
