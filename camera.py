@@ -1,6 +1,8 @@
 import time
 import picamera
 import matplotlib.image as mpimg
+import cv2  # bringing in OpenCV libraries
+
 import numpy as np
 from fractions import Fraction
 
@@ -20,15 +22,21 @@ from fractions import Fraction
 class camera():
 
     def __init__(self):
-        self.camera = picamera.PiCamera(camera_num=0,sensor_mode=4)
+        self.camera = picamera.PiCamera(camera_num=0,sensor_mode=2)
+        self.camera.resolution = (3280, 2464)
         # Camera warm-up time
         # self.camera.framerate = Fraction(1, 6)
 
         # self.camera.shutter_speed = 6000000
-        self.camera.exposure_mode = 'off'
+        self.camera.exposure_mode = 'auto'
         self.camera.iso = 800
 
-        time.sleep(2)
+        self.filename               = './photos/street.jpg'
+        self.filename_gray          = './photos/street_gray.jpg'
+        self.filename_gaussian      = './photos/street_gaussian.jpg'
+        self.filename_edges         = './photos/street_edges.jpg'
+        self.filename_maskededges   = './photos/street_maskededges.jpg'
+        self.lane_detection         = './photos/street_lane_detected.jpg'
 
     def take_picture(self):
         #
@@ -46,29 +54,32 @@ class camera():
         # 'antishake'
         # 'fireworks'
 
-        # self.camera.meter_mode = 'average'
-        self.camera.start_preview()
-        self.camera.capture('photo.jpg',format='jpeg')
-        self.camera.stop_preview()
+        #
+        self.camera.meter_mode = 'average'
+        # self.camera.start_preview()
+        time.sleep(2)
+        self.camera.capture(self.filename,format='jpeg')
+        # self.camera.stop_preview()
 
-    def lane_detection(self):
+    def detect_lane(self):
+        image = mpimg.imread(self.filename)
 
-        image = mpimg.imread('photo.jpg')
-
-        import cv2  # bringing in OpenCV libraries
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # grayscale conversion
+        cv2.imwrite(self.filename_gray, gray)
+        # #
 
-        # cv2.imwrite('photo_gray_image.png', gray)
-
-        # Define a kernel size and apply Gaussian smoothing
+        # # Define a kernel size and apply Gaussian smoothing
         kernel_size = 5
-        blur_gray = cv2.GaussianBlur(gray, (kernel_size, kernel_size), 0)
 
-        # Define our parameters for Canny and apply
-        low_threshold = 50
-        high_threshold = 130
+        blur_gray = cv2.GaussianBlur(gray, (kernel_size, kernel_size), 0)
+        cv2.imwrite(self.filename_gaussian, blur_gray)
+
+        # # Define our parameters for Canny and apply
+        low_threshold = 20
+        high_threshold = 140
+        # edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
         edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
-        cv2.imwrite('photo_edges.png', edges)
+        cv2.imwrite(self.filename_edges, edges)
 
         # Next we'll create a masked edges image using cv2.fillPoly()
         mask = np.zeros_like(edges)
@@ -80,33 +91,32 @@ class camera():
         cv2.fillPoly(mask, vertices, ignore_mask_color)
         masked_edges = cv2.bitwise_and(edges, mask)
 
-        masked_edges2 = cv2.bitwise_and(blur_gray, mask)
-        cv2.imwrite('photo_masked_edges.png', masked_edges2)
-
-
-        # Define the Hough transform parameters
-        # Make a blank the same size as our image to draw on
-        rho = 3  # distance resolution in pixels of the Hough grid
-        theta = 1  # np.pi/180 # angular resolution in radians of the Hough grid
-        threshold = 5  # minimum number of votes (intersections in Hough grid cell)
-        min_line_length = 2  # minimum number of pixels making up a line
-        max_line_gap = 100  # maximum gap in pixels between connectable line segments
-        line_image = np.copy(image) * 0  # creating a blank to draw lines on
-
-        # Run Hough on edge detected image
-        # Output "lines" is an array containing endpoints of detected line segments
-        lines = cv2.HoughLinesP(masked_edges, rho, theta, threshold, np.array([]),
-                                min_line_length, max_line_gap)
-
-        # Iterate over the output "lines" and draw lines on a blank image
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
-
-        # Create a "color" binary image to combine with line image
-        color_edges = np.dstack((edges, edges, edges))
-
-        # Draw the lines on the edge image
-        lines_edges = cv2.addWeighted(color_edges, 0.8, line_image, 1, 0)
-
-        cv2.imwrite('photo_lines_edges.png', lines_edges)
+        cv2.imwrite(self.filename_maskededges, masked_edges)
+        #
+        #
+        # # Define the Hough transform parameters
+        # # Make a blank the same size as our image to draw on
+        # rho = 3  # distance resolution in pixels of the Hough grid
+        # theta = 1  # np.pi/180 # angular resolution in radians of the Hough grid
+        # threshold = 5  # minimum number of votes (intersections in Hough grid cell)
+        # min_line_length = 2  # minimum number of pixels making up a line
+        # max_line_gap = 100  # maximum gap in pixels between connectable line segments
+        # line_image = np.copy(image) * 0  # creating a blank to draw lines on
+        #
+        # # Run Hough on edge detected image
+        # # Output "lines" is an array containing endpoints of detected line segments
+        # lines = cv2.HoughLinesP(masked_edges, rho, theta, threshold, np.array([]),
+        #                         min_line_length, max_line_gap)
+        #
+        # # Iterate over the output "lines" and draw lines on a blank image
+        # for line in lines:
+        #     for x1, y1, x2, y2 in line:
+        #         cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
+        #
+        # # Create a "color" binary image to combine with line image
+        # color_edges = np.dstack((edges, edges, edges))
+        #
+        # # Draw the lines on the edge image
+        # lines_edges = cv2.addWeighted(color_edges, 0.8, line_image, 1, 0)
+        #
+        # cv2.imwrite(self.lane_detection, lines_edges)

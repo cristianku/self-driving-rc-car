@@ -220,8 +220,14 @@ obstacle_avoided = False
 # time.sleep(1)
     #stop_everything()
 
-camera = camera.camera()
+camera1 = camera.camera()
+# import picamera
+# camera = picamera.PiCamera(camera_num=0, sensor_mode=2)
+# camera.resolution = (3280 , 2464)
+#
+# time.sleep(2)
+# camera.capture('./photos/ciccio.jpg', format='jpeg')
 
-for i in range(1,10):
-    camera.take_picture(i)
-    camera.lane_detection(i)
+# for i in range(1,10):
+camera1.take_picture()
+camera1.detect_lane()
